@@ -99,6 +99,63 @@ Service Hours: Mon - Wed 7:00 pm - 9:00 pm
             "reasoning": "String"
         }}
         """
+
+    def create_evaluation_prompt(self, original, corrected, reasoning, original_score, corrected_score, isValid, requirements):
+        return f"""
+        your task is to evaluate a peer response to a data validation task. The peer has been asked to validate whether a data field value meets a set of requirements.
+
+        The original field value is:
+        <original>
+        {original}
+        </original>
+
+        The requirements for the field are:
+        <requirements>
+        {requirements}
+        </requirements>
+
+        The peer has given the following corrected field value:
+        <corrected>
+        {corrected}
+        </corrected>
+
+        The peer has given the following reasoning for their correction:
+        <reasoning>
+        {reasoning}
+        </reasoning>
+
+        The peer has given the following scores for their original and corrected values:
+        <scores>
+        Original Score: {original_score}
+        Corrected Score: {corrected_score}
+        </scores>
+
+        The peer has given the following evaluation of the corrected value:
+        <evaluation>
+        {isValid}
+        </evaluation>
+
+        Your task is to evaluate the peer's task. Return a JSON object with the format shown below.
+
+        {{
+            "original": "fieldValue",
+            "isValid": "Boolean",
+            "original_score": "Number",
+            "corrected_score": "Number",
+            "corrected": "String",
+            "reasoning": "String"
+            "your_evaluation": "Boolean"
+            "your_score": "Number"
+            "your_reasoning": "String"
+        }}
+
+        - In the your_evaluation field of the response object, return true if the corrected value meets the requirements and false if it does not.
+        - In the your_score field of the response object, return a number between 0 and 1 that represents the confidence level that the corrected value meets the requirements. A score of 1 means the corrected value meets the requirements with 100% confidence. A score of 0 means the corrected value does not meet the requirements with 0% confidence.
+        - In the your_reasoning field of the response object, explain in detail how the corrected value does or does not meet each requirement.
+        """
+
+
+
     def validate_json_prompt(self, responseToFomat):
         return f"""
 You will be given a string in JSON format like this:

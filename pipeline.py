@@ -23,47 +23,65 @@ if __name__ == "__main__":
     csv_reader = reader()
 
     # read the csv file
-    file = "Hours of operation.csv"
-    data = csv_reader.read_csv(file)
+    # file = "Hours of operation.csv"
+    # data = csv_reader.read_csv(file)
 
-    with open("output.json", "w") as file:
+    # with open("output.json", "w") as file:
+    #     file.write("[\n")
+    #     for idx, line in enumerate(data.split("\n")):
+    #         if idx > 4:
+    #             break
+
+    #         response = anthropic_client.get_response(prompt_tools.create_prompt(line, prompt_tools.hoursOfOpperationRequirements))
+    #         # print(response)
+    #         # print(response[0].text)
+    #         result = re.search(r'\{(.|\n)*\}', response[0].text)
+
+    #         # Extract and print the content if found
+    #         if result:
+    #             removed_result = result.group(0)
+
+    #             # validate removed_result is a valid JSON string
+    #             try:
+    #                 reformated_response = json.loads(removed_result)
+    #             except:
+    #                 try:
+    #                     reformated_response = anthropic_client.get_response(prompt_tools.validate_json_prompt(removed_result))
+    #                     # print(reformated_response)
+    #                     reformated_response = json.loads(re.search(r'\{(.|\n)*\}', reformated_response[0].text).group(0))
+    #                 except Exception as e:
+    #                     print(e)
+    #                     break
+    #         else:
+    #             print("No outermost curly braces found.")
+
+    #         # print(reformated_response)
+
+    #         print(reformated_response["original"])
+
+
+    #         # Write the reformated_response to the output file
+    #         file.write(json.dumps(reformated_response, indent=4))
+    #         file.write(",\n")
+    #     # on close of the loop, remove the last comma and add the closing curly brace
+    #     file.seek(file.tell()-2)
+    #     file.write("\n]")
+    #     file.close()
+
+
+    f = open("output.json")
+
+    data = json.load(f)
+
+    with open("evaluation.json", "w") as file:
         file.write("[\n")
-        for idx, line in enumerate(data.split("\n")):
-            if idx > 4:
-                break
+        for idx, item in enumerate(data):
 
-            response = anthropic_client.get_response(prompt_tools.create_prompt(line, prompt_tools.hoursOfOpperationRequirements))
-            # print(response)
-            # print(response[0].text)
-            result = re.search(r'\{(.|\n)*\}', response[0].text)
-
-            # Extract and print the content if found
-            if result:
-                removed_result = result.group(0)
-
-                # validate removed_result is a valid JSON string
-                try:
-                    reformated_response = json.loads(removed_result)
-                except:
-                    try:
-                        reformated_response = anthropic_client.get_response(prompt_tools.validate_json_prompt(removed_result))
-                        # print(reformated_response)
-                        reformated_response = json.loads(re.search(r'\{(.|\n)*\}', reformated_response[0].text).group(0))
-                    except Exception as e:
-                        print(e)
-                        break
-            else:
-                print("No outermost curly braces found.")
-
-            # print(reformated_response)
-
-            print(reformated_response["original"])
-
-
-            # Write the reformated_response to the output file
-            file.write(json.dumps(reformated_response, indent=4))
+            # run item through the openai model to evaluate the response
+            response = openai_client.get_response(prompt_tools.create_evaluation_prompt(item["original"], item["corrected"], item["reasoning"], item["original_score"], item["corrected_score"], item["isValid"], prompt_tools.hoursOfOpperationRequirements))
+            file.write(json.dumps(json.loads(response), indent=4))
             file.write(",\n")
-        # on close of the loop, remove the last comma and add the closing curly brace
+            print(str(idx + 1) + " of " + str(len(data)))
         file.seek(file.tell()-2)
         file.write("\n]")
         file.close()
