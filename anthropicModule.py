@@ -9,10 +9,11 @@ class anthropicLLM:
             # defaults to os.environ.get("ANTHROPIC_API_KEY")
             api_key=os.getenv("ANTHROPIC_API_KEY"),
         )
+        self.name = "anthropic"
 
-    def get_response(self, prompt):
+    def get_response(self, prompt, model="claude-3-opus-20240229"):
         message = self.client.messages.create(
-            model="claude-3-opus-20240229",
+            model=model,
             max_tokens=1000,
             temperature=0.0,
             system="Respond to user input to the best of your ability.",
