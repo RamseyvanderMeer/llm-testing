@@ -30,6 +30,9 @@ class evaluator:
         # file = "Hours of operation.csv"
         data = csv_reader.read_csv(file)
 
+        if os.path.exists(output_file):
+            return
+
         with open(output_file, "w") as file:
             file.write("[\n")
             for idx, line in enumerate(data.split("\n")):
@@ -55,10 +58,9 @@ class evaluator:
                             # print(reformated_response)
                             reformated_response = json.loads(re.search(r'\{(.|\n)*\}', reformated_response[0].text).group(0))
                         except Exception as e:
-                            print(e)
-                            break
+                            reformated_response = {"original": line, "corrected": "llm provided borken formatting in response", "reasoning": e, "original_score": 0, "corrected_score": 0, "isValid": False}
                 else:
-                    print("No outermost curly braces found.")
+                    reformated_response = {"original": line, "corrected": "llm provided borken formatting in response", "reasoning": "No reasoning provided", "original_score": 0, "corrected_score": 0, "isValid": False}
 
                 # print(reformated_response)
 
@@ -74,16 +76,24 @@ class evaluator:
             file.close()
 
     def evaluate_llm(self, client, input_file, output_file="evaluation.json", max_lines=100):
-        f = open("output.json")
+
+        if os.path.exists(output_file):
+            return
+
+        f = open(input_file, "r")
 
         data = json.load(f)
 
-        with open("evaluation.json", "w") as file:
+        with open(output_file, "w") as file:
             file.write("[\n")
             for idx, item in enumerate(data):
 
                 response = client.get_response(prompt_tools.create_evaluation_prompt(item["original"], item["corrected"], item["reasoning"], item["original_score"], item["corrected_score"], item["isValid"], prompt_tools.hoursOfOpperationRequirements))
-                file.write(json.dumps(json.loads(response), indent=4))
+                try:
+                    file.write(json.dumps(json.loads(response), indent=4))
+                except:
+                    fail_response = {"original": item["original"], "corrected": item["corrected"], "reasoning": "llm provided borken formatting in response", "your_score": 0, "isValid": False}
+                    file.write(json.dumps(fail_response, indent=4))
                 file.write(",\n")
                 print(str(idx + 1) + " of " + str(len(data)))
             file.seek(file.tell()-2)
@@ -95,13 +105,13 @@ class evaluator:
         num_lines = sum(1 for line in open(input_file))
         # print(num_lines)
         # print(str(llm1.name) + " " + str(llm2.name) + " " + input_file)
-        score_evaluator.evaluate("Hours of operation.csv", llm1, llm1.name + "_output.json", num_lines)
-        score_evaluator.evaluate_llm(llm2, "output.json", llm2.name + "_evaluation_of_" + llm1.name + ".json", num_lines)
+        score_evaluator.evaluate(input_file, llm1, llm1.name + "_output_" + input_file + ".json", num_lines)
+        score_evaluator.evaluate_llm(llm2, llm1.name + "_output_" + input_file + ".json", llm2.name + "_evaluation_of_" + llm1.name + "_" + input_file + ".json", num_lines)
 
         # calculate the scores
-        total_original_score, potential_original_score = score_evaluator.calculateTotalScore(llm2.name + "_evaluation_of_" + llm1.name + ".json", "original_score")
-        total_corrected_score, potential_corrected_score = score_evaluator.calculateTotalScore(llm2.name + "_evaluation_of_" + llm1.name + ".json", "corrected_score")
-        llm_evaluation_score, llm_evaluation_potential_score = score_evaluator.calculateTotalScore(llm2.name + "_evaluation_of_" + llm1.name + ".json", "your_score")
+        total_original_score, potential_original_score = score_evaluator.calculateTotalScore(llm2.name + "_evaluation_of_" + llm1.name + "_" + input_file + ".json", "original_score")
+        total_corrected_score, potential_corrected_score = score_evaluator.calculateTotalScore(llm2.name + "_evaluation_of_" + llm1.name + "_" + input_file + ".json", "corrected_score")
+        llm_evaluation_score, llm_evaluation_potential_score = score_evaluator.calculateTotalScore(llm2.name + "_evaluation_of_" + llm1.name + "_" + input_file + ".json", "your_score")
 
         with open(llm2.name + "_evaluation_scores_of_" + llm1.name + ".json", "w") as file:
             file.write("Scores for " + str(llm1.name) + " correcting the data and " + str(llm2.name) + " evaluating the corrections" + "\n")
