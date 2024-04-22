@@ -106,7 +106,7 @@ class evaluator:
                     file.close()
 
         f = open(input_file, "r")
-        data = json.load(f)
+        data = json.loads(f.read())
 
         with open(output_file, "a") as file:
             if num_completed == 0:
