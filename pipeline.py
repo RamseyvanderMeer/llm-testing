@@ -48,7 +48,7 @@ class evaluator:
                 # else:
                 #     res = response.choices[0].message
 
-                result = re.search(r'\{(.|\n)*\}', res)
+                result = re.search(r'\{(.|\n)*\}', response)
 
                 # Extract and print the content if found
                 if result:
