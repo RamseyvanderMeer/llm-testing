@@ -43,7 +43,12 @@ class evaluator:
                 response = client.get_response(prompt_tools.create_prompt(line, prompt_tools.hoursOfOpperationRequirements))
                 # print(response)
                 # print(response[0].text)
-                result = re.search(r'\{(.|\n)*\}', response[0].text)
+                if client.name == "anthropic":
+                    res = response[0].text
+                else:
+                    res = response.choices[0].message
+
+                result = re.search(r'\{(.|\n)*\}', res)
 
                 # Extract and print the content if found
                 if result:
@@ -99,7 +104,7 @@ class evaluator:
                     # print(prev_data)
                     print("Number of completed evaluations: " + str(num_completed))
                     file.close()
-                    
+
         f = open(input_file, "r")
         data = json.load(f)
 
