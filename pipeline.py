@@ -1,10 +1,10 @@
-from dotenv import load_dotenv
 import json
 import os
 import re
 import anthropicModule
 import openaiModule
 import toolsModule
+from dotenv import load_dotenv
 
 class reader:
     """this is a class used to read .csv files for the anthropic pipeline"""
@@ -16,8 +16,8 @@ class reader:
 
 class evaluator:
     def calculateTotalScore(self, file, feild):
-        with open(file, 'r') as file:
-            data = json.load(file)
+        with open(file, 'r') as f:
+            data = json.load(f)
             total_score = 0
             potential_score = 0
             for item in data:
@@ -76,17 +76,40 @@ class evaluator:
             file.close()
 
     def evaluate_llm(self, client, input_file, output_file="evaluation.json", max_lines=100):
-
+        print(output_file)
+        num_completed = 0
         if os.path.exists(output_file):
-            return
+            try:
+                f = open(output_file, "r")
+                data = json.loads(f.read())
+                print("File already exists")
+                return
+            except:
 
+                # count number of json objects in the file to determine how many have been completed
+                # file contains a list of json objects
+                with open(output_file, "r") as file:
+
+                    prev_data = file.read()
+                    # remove the last comma and add a closing square bracket to prev_data
+                    prev_data = prev_data[:len(prev_data)-2] + "\n]"
+                    print(prev_data)
+                    prev_data = json.loads(prev_data)
+                    num_completed = len(prev_data)
+                    # print(prev_data)
+                    print("Number of completed evaluations: " + str(num_completed))
+                    file.close()
+                    
         f = open(input_file, "r")
-
         data = json.load(f)
 
-        with open(output_file, "w") as file:
-            file.write("[\n")
+        with open(output_file, "a") as file:
+            if num_completed == 0:
+                file.write("[\n")
             for idx, item in enumerate(data):
+
+                if idx < num_completed:
+                    continue
 
                 response = client.get_response(prompt_tools.create_evaluation_prompt(item["original"], item["corrected"], item["reasoning"], item["original_score"], item["corrected_score"], item["isValid"], prompt_tools.hoursOfOpperationRequirements))
                 try:
