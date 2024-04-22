@@ -22,4 +22,4 @@ class anthropicLLM:
             ]
         )
 
-        return message.content
+        return message.conten[0].text

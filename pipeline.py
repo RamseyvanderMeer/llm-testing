@@ -43,10 +43,10 @@ class evaluator:
                 response = client.get_response(prompt_tools.create_prompt(line, prompt_tools.hoursOfOpperationRequirements))
                 # print(response)
                 # print(response[0].text)
-                if client.name == "anthropic":
-                    res = response[0].text
-                else:
-                    res = response.choices[0].message
+                # if client.name == "anthropic":
+                #     res = response[0].text
+                # else:
+                #     res = response.choices[0].message
 
                 result = re.search(r'\{(.|\n)*\}', res)
 
