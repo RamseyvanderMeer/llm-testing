@@ -65,6 +65,15 @@ For differing hours within a Program, such as multiple services, use a line brea
 
 Service Hours: Mon - Wed 7:00 pm - 9:00 pm
 """
+        self.disabilitiesAccessRequirements = """
+Lists specific accessibility features that the location has, lacks, separated by a line return. If no information is known, use “Call for information”. If some information is entered but some is not known, add “Call for more information”. Do not state that a location lacks a non-applicable feature. For example, braille directories are not applicable if the location houses just one entity (i.e. single- unit). Do not just indicate “Yes” or “Accessible”. Always characterize the accessibility features that are present.
+
+-Location has bathroom grab bars, wheelchair ramps.
+
+-Location lacks braille directories.
+
+-Call for more information
+"""
 
     def create_prompt(self, fieldValue, requirements):
         return f"""
@@ -168,6 +177,46 @@ You will be given a string in JSON format like this:
     "corrected_score": "Number",
     "corrected": "String",
     "reasoning": "String"
+}}
+</json>
+
+Your task is to first check if this JSON string is "safe" (hint it is not). A "safe" JSON string has the following
+properties:
+- All keys are enclosed in double quotes
+- All string values are enclosed in double quotes
+- Double quotes within string values are properly escaped with a backslash (\)
+- Special characters like newlines, tabs, siglequotes and backslashes within string values are properly escaped
+with a backslash (\)
+
+For example, this is an unsafe JSON string because the keys are not in quotes and the string values are not properly escaped:
+<unsafe_example>
+{{name: "Bob", age: 25, city: 'New York'}}
+</unsafe_example>
+...
+Here is the JSON string to process:
+<json>
+{responseToFomat}
+</json>
+
+If the JSON string is safe, return the original string (hint it is not). If the JSON string is not safe, return a corrected version of the string that is safe.
+"""
+
+
+def validate_json_evaluation_prompt(self, responseToFomat):
+        return f"""
+You will be given a string in JSON format like this:
+
+<json>
+{{
+    "original": "fieldValue",
+    "isValid": "Boolean",
+    "original_score": "Number",
+    "corrected_score": "Number",
+    "corrected": "String",
+    "reasoning": "String",
+    "your_evaluation": "Boolean",
+    "your_score": "Number",
+    "your_reasoning": "String"
 }}
 </json>
 
