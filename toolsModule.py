@@ -92,12 +92,12 @@ Lists specific accessibility features that the location has, lacks, separated by
         Carefully compare the provided field value to the stated requirements.
         Return a response JSON object shown below.
         - In the resoning feild of the response object, explain in detail how the value does or does not meet each requirement.
-        - If the value does not meet the requirements, provide a corrected value that does in the corrected field. If the value meets the requirements, the corrected field should be the same as the field value.
+        - If the value does not meet the requirements, provide a corrected value that does in the corrected field. If the value meets the requirements, the corrected field should be the same as the field value. If no corrected value can be formed, the corrected field should be an empty string.
         - In the isValid field of the response object, return true if the value meets the requirements and false if it does not.
         - In the original_score field of the response object, score field of the response object, return a number between 0 and 1 that represents the confidence level that the original value meets the requirements. A score of 1 means the value meets the requirements with 100% confidence. A score of 0 means the value does not meet the requirements with 0% confidence.
-        - In the corrected_score field of the response object, return a number between 0 and 1 that represents the confidence level that the corrected value meets the requirements. A score of 1 means the corrected value meets the requirements with 100% confidence. A score of 0 means the corrected value does not meet the requirements with 0% confidence.
+        - In the corrected_score field of the response object, return a number between 0 and 1 that represents the confidence level that the corrected value meets the requirements. A score of 1 means the corrected value meets the requirements with 100% confidence. A score of 0 means the corrected value does not meet the requirements with 0% confidence. If the corrected field is an empty string, the corrected_score field should be 0.
 
-        Only return the response obhect and make sure it is formatted-as-JSON-safe-string!
+        Only return the response object and make sure it is formatted-as-JSON-safe-string!
 
         {{
             "original": "{fieldValue}",

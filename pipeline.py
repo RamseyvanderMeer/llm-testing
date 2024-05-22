@@ -22,7 +22,7 @@ class evaluator:
             total_score = 0
             potential_score = 0
             for item in data:
-                total_score += item[feild]
+                total_score += float(item[feild])
                 potential_score += 1
             return (total_score, potential_score)
 
@@ -99,12 +99,19 @@ class evaluator:
                 # Write the reformated_response to the output file
                 file.write(json.dumps(reformated_response, indent=4))
                 file.write(",\n")
-            # on close of the loop, remove the last comma and add the closing curly brace
-            file.seek(file.tell()-3)
+            file.close()
+        with open(output_file, "r+") as file:
+            # Move to the end of the file
+            file.seek(0, 2)
+            # Go back two characters from the end
+            file.seek(file.tell() - 2)
+            # Truncate the file at the new position, effectively deleting the last two characters
+            file.truncate()
+            # file.seek(file.tell()-2)
             file.write("\n]")
             file.close()
 
-    def evaluate_llm(self, client, input_file, output_file="evaluation.json", max_lines=100, file="Hours of operation.csv"):
+    def evaluate_llm(self, client, input_file, output_file="evaluation.json", max_lines=100, req_file="Hours of operation.csv"):
         print(output_file)
         num_completed = 0
         if os.path.exists(output_file):
@@ -140,9 +147,9 @@ class evaluator:
 
                 if idx < num_completed:
                     continue
-                if file == "Hours of operation.csv":
+                if req_file == "Hours of operation.csv":
                     response = client.get_response(prompt_tools.create_evaluation_prompt(item["original"], item["corrected"], item["reasoning"], item["original_score"], item["corrected_score"], item["isValid"], prompt_tools.hoursOfOpperationRequirements))
-                elif file == "Disabilities Access.csv":
+                elif req_file == "Disabilities Access.csv":
                     response = client.get_response(prompt_tools.create_evaluation_prompt(item["original"], item["corrected"], item["reasoning"], item["original_score"], item["corrected_score"], item["isValid"], prompt_tools.disabilitiesAccessRequirements))
                 result = re.search(r'\{(.|\n)*\}', response)
 
@@ -165,7 +172,15 @@ class evaluator:
                     file.write(json.dumps(fail_response, indent=4))
                 file.write(",\n")
                 print(str(idx + 1) + " of " + str(len(data)))
-            file.seek(file.tell()-3)
+            file.close()
+        with open(output_file, "r+") as file:
+            # Move to the end of the file
+            file.seek(0, 2)
+            # Go back two characters from the end
+            file.seek(file.tell() - 2)
+            # Truncate the file at the new position, effectively deleting the last two characters
+            file.truncate()
+            # file.seek(file.tell()-2)
             file.write("\n]")
             file.close()
 
@@ -192,29 +207,41 @@ class evaluator:
             print("Total Corrected Score: " + str(total_corrected_score) + " out of " + str(potential_corrected_score))
             print("LLM Evaluation Score: " + str(llm_evaluation_score) + " out of " + str(llm_evaluation_potential_score))
 
+        with open("scores.csv", "a") as file:
+            file.write(str(llm1.name) + "," + str(llm2.name) + "," + input_file + "," + str(total_original_score) + "," + str(potential_original_score) + "," + str(total_corrected_score) + "," + str(potential_corrected_score) + "," + str(llm_evaluation_score) + "," + str(llm_evaluation_potential_score) + "\n")
+            file.close()
+
 if __name__ == "__main__":
     load_dotenv()
 
     anthropic_client = anthropicModule.anthropicLLM()
     openai_35_client = openaiModule.openai35LLM()
     openai_4_client = openaiModule.openai4LLM()
+    openai_4o_client = openaiModule.openai4oLLM()
     prompt_tools = toolsModule.tools()
     csv_reader = reader()
     score_evaluator = evaluator()
 
-    score_evaluator.run_llms(anthropic_client, openai_35_client, "Hours of operation.csv")
-    score_evaluator.run_llms(anthropic_client, openai_4_client, "Hours of operation.csv")
-    score_evaluator.run_llms(openai_35_client, openai_4_client, "Hours of operation.csv")
-    score_evaluator.run_llms(openai_4_client, openai_35_client, "Hours of operation.csv")
+    with open("scores.csv", "w") as file:
+        file.write("llm1,llm2,input_file,total_original_score,potential_original_score,total_corrected_score,potential_corrected_score,llm_evaluation_score,llm_evaluation_potential_score\n")
+        file.close()
+
+    score_evaluator.run_llms(openai_4o_client, openai_35_client, "Hours of operation.csv")
+    score_evaluator.run_llms(openai_4o_client, openai_4_client, "Hours of operation.csv")
+    # score_evaluator.run_llms(openai_35_client, openai_4_client, "Hours of operation.csv")
+    # score_evaluator.run_llms(openai_4_client, openai_35_client, "Hours of operation.csv")
     # score_evaluator.run_llms(openai_35_client, anthropic_client, "Hours of operation.csv")
     # score_evaluator.run_llms(openai_4_client, anthropic_client, "Hours of operation.csv")
 
-    score_evaluator.run_llms(anthropic_client, openai_35_client, "Disabilities Access.csv")
-    score_evaluator.run_llms(anthropic_client, openai_4_client, "Disabilities Access.csv")
-    score_evaluator.run_llms(openai_35_client, openai_4_client, "Disabilities Access.csv")
-    score_evaluator.run_llms(openai_4_client, openai_35_client, "Disabilities Access.csv")
-    score_evaluator.run_llms(openai_35_client, anthropic_client, "Disabilities Access.csv")
-    score_evaluator.run_llms(openai_4_client, anthropic_client, "Disabilities Access.csv")
+    score_evaluator.run_llms(openai_4o_client, openai_35_client, "Disabilities Access.csv")
+    score_evaluator.run_llms(openai_4o_client, openai_4_client, "Disabilities Access.csv")
+
+    score_evaluator.run_llms(openai_4o_client, anthropic_client, "Hours of operation.csv")
+    score_evaluator.run_llms(openai_4o_client, anthropic_client, "Disabilities Access.csv")
+    # score_evaluator.run_llms(openai_35_client, openai_4_client, "Disabilities Access.csv")
+    # score_evaluator.run_llms(openai_4_client, openai_35_client, "Disabilities Access.csv")
+    # score_evaluator.run_llms(openai_35_client, anthropic_client, "Disabilities Access.csv")
+    # score_evaluator.run_llms(openai_4_client, anthropic_client, "Disabilities Access.csv")
 
 
 

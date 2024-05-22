@@ -46,3 +46,26 @@ class openai4LLM:
         )
 
         return response.choices[0].message.content
+
+
+class openai4oLLM:
+    def __init__(self):
+        self.prompt = os.getenv("openai_prompt")
+        self.client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+        )
+        self.name = "gpt-4o"
+
+    def get_response(self, prompt, model="gpt-4o"):
+        response = self.client.chat.completions.create(
+            model=model,
+            response_format={ "type": "json_object" },
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant designed to output JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=1000,
+            temperature=0.0,
+        )
+
+        return response.choices[0].message.content
